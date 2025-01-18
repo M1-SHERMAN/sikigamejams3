@@ -13,8 +13,15 @@ UCLASS()
 class SIKIGAMEJAMS3_API AMainGameMode : public AGameMode
 {
 	GENERATED_BODY()
-
 public:
-	void HandleGameOver();
-	
+	void HandleGameOver(bool bHasWinTheGame);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEnemyNumberChanged, int, InRemainingEnemies);
+	FOnEnemyNumberChanged OnEnemyNumberChanged;
+	void OnEnemyDestroyed();
+protected:
+	virtual void BeginPlay() override;
+private:
+	int RemainingEnemies;
+public:
+	FORCEINLINE int GetRemainingEnemies() const { return RemainingEnemies; }
 };

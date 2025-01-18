@@ -21,4 +21,6 @@ class SIKIGAMEJAMS3_API IInteractWithEnmyInterface
 	GENERATED_BODY()
 
 public:
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="InteractWithEnemy")
+	void GettingAttack();
 };

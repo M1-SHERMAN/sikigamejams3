@@ -17,6 +17,8 @@ class SIKIGAMEJAMS3_API AUGameHUD : public AHUD
 public:
 	UPROPERTY()
 	UGameOverlay* GameOverlay;
+	virtual void DrawHUD() override;
+
 	
 protected:
 	virtual void BeginPlay() override;
@@ -25,4 +27,16 @@ private:
 	TSubclassOf<UGameOverlay> GameOverlayClass;
 
 	void AddGameOverlay();
+
+	UPROPERTY()
+	UTexture2D* AimDot;
+	FLinearColor AimDotColor;
+	void DrawAimDot(UTexture2D* AimDotTexture,
+		const FVector2D& ViewportCenter,
+		FLinearColor Color);
+public:
+	FORCEINLINE UTexture2D* GetAimDot() const { return AimDot; }
+	FORCEINLINE void SetAimDot(UTexture2D* InAimDot) { AimDot = InAimDot; }
+	FORCEINLINE void SetAimDotColor(FLinearColor InAimDotColor) { AimDotColor = InAimDotColor; }
+
 };

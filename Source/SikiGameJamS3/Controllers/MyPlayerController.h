@@ -17,15 +17,16 @@ class SIKIGAMEJAMS3_API AMyPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 public:
-	void SetHUDAlertLevel(float AlertLevel, float MaxAlertLevel);
-	void SetHUDSatiety(float Satiety, float MaxSatiety);
-	void SetHUDRangeAttackTime(int InRangeAttackTime);
-	void SetHUDRemainingEnemies(int InRemainingEnemies);
-	
+	void UpdateHUDAlertLevel(float AlertLevel, float MaxAlertLevel);
+	void UpdateHUDSatiety(float Satiety, float MaxSatiety);
+	void UpdateHUDRangeAttackTime(int InRangeAttackTime);
+	void UpdateHUDRemainingEnemies(int InRemainingEnemies);
+	void UpdateHUDAimDot(UTexture2D* InAimDot, FLinearColor InAimDotColor);
+
 protected:
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaSeconds) override;
 	void TryGetPlayerCharacter();
-	
 private:
 	UPROPERTY(EditAnywhere, Category = "Enhanced Input Assets")
 	UInputMappingContext* InputMappingContext;
@@ -60,4 +61,9 @@ private:
 
 	UPROPERTY()
 	AUGameHUD* GameHUD;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess), Category="Gameplay")
+	int RemainingEnemies = 0;
+	UFUNCTION()
+	void OnEnemyNumberChanged(int InRemainingEnemies);
 };

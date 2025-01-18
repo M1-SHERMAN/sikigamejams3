@@ -4,13 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "BaseCharacter.h"
+#include "SikiGameJamS3/Interfaces/InteractWithEnmyInterface.h"
 #include "PlayerCharacter.generated.h"
 
+class UBoxComponent;
 class UAnimMontage;
 class USpringArmComponent;
 class UCameraComponent;
+class USoundCue;
 UCLASS()
-class SIKIGAMEJAMS3_API APlayerCharacter : public ABaseCharacter
+class SIKIGAMEJAMS3_API APlayerCharacter : public ABaseCharacter, public IInteractWithEnmyInterface
 {
 	GENERATED_BODY()
 public:
@@ -32,6 +35,22 @@ protected:
 private:
 	UPROPERTY()
 	class AMyPlayerController* MyPlayerController;
+
+	/**
+	 * Attack Properties
+	 */
+	UPROPERTY(EditAnywhere, Category="Attack|CollisionBox")
+	UBoxComponent* MeleeAttackCollisionBox;
+	UFUNCTION(BlueprintCallable, Category="Attack|Melee")
+	void OnMeleeAttackCollisionBoxOverlap(UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex,
+		bool bFromSweep,
+		const FHitResult& SweepResult);
+	UPROPERTY(EditAnywhere, Category="Attack|Range")
+	TSubclassOf<class AProjectile> ProjectileClass;
+	
 	/**
 	 * Camera Properties
 	 */
@@ -57,9 +76,16 @@ private:
 	bool bIsAttackStart;
 	bool bIsInteracting;
 	bool bIsSprinting;
+	bool bIsInterpolatingSatiety;
+	float TargetSatiety;
+	
 
-	UPROPERTY(EditAnywhere, Category="Character|State")
+	
+	/**
+	 * Character Data
+	 */
 	int RangeAttackTimes = 0;
+	float SpeedFactor;
 
 	UPROPERTY(EditAnywhere, Category="Character|Movement Datas")
 	float SprintSpeed = 600.f;
@@ -67,6 +93,14 @@ private:
 	float WalkSpeed = 300.f;
 	UPROPERTY(EditAnywhere, Category="Character|Movement Datas")
 	float AimSpeed = 150.f;
+	UPROPERTY(EditAnywhere, Category="Character|Movement Datas")
+	float MinSpeedFactor = 0.2f;
+	UPROPERTY(EditAnywhere, Category="Character|Movement Datas")
+	float MaxSpeedFactor = 1.2f;
+	UPROPERTY(EditAnywhere, Category="Character|Movement Datas")
+	float LowerSatietyEffectThreshold = 0.2f;
+	UPROPERTY(EditAnywhere, Category="Character|Movement Datas")
+	float UpperSatietyEffectThreshold = 0.95f;
 	
 	UPROPERTY(EditAnywhere, Category="Character|Alert Datas|Basic")
 	float CurrentAlertLevel = 0.f;
@@ -74,31 +108,63 @@ private:
 	float MaxAlertLevel = 100.f;
 	
 	UPROPERTY(EditAnywhere, Category="Character|Alert Datas|Attack")
-	float MeleeAttackAlertLevel = 100.f;
+	float MeleeAttackAlertLevel = 30.f;
 	UPROPERTY(EditAnywhere, Category="Character|Alert Datas|Attack")
 	float RangeAttackAlertLevel = 10.f;
 	
 	UPROPERTY(EditAnywhere, Category="Character|Alert Datas|Movement")
-	float SprintAlertLevel = 0.09f;
+	float SprintAlertLevel = 0.02f;
 	UPROPERTY(EditAnywhere, Category="Character|Alert Datas|Movement")
-	float WalkAlertLevel = 0.04f;
+	float WalkAlertLevel = 0.009f;
 	
 	UPROPERTY(EditAnywhere, Category="Character|Alert Datas|Decay")
-	float AlertLevelDecayRate = 1.f;
+	float AlertLevelDecayRate = 0.8f;
 	UPROPERTY(EditAnywhere, Category="Character|Alert Datas|Decay")
-	float AlertLevelNatualDecayThreshold = 70.f;
+	float AlertLevelNatualDecayThreshold = 50.f;
 	
 	UPROPERTY(EditAnywhere, Category="Character|Satiety Datas")
-	float Satiety = 100.f;
+	float Satiety = 50.f;
 	UPROPERTY(EditAnywhere, Category="Character|Satiety Datas")
 	float MaxSatiety = 100.f;
 	UPROPERTY(EditAnywhere, Category="Character|Satiety Datas")
-	float SatietyDecayRate = 1.f;
+	float SatietyDecayRate = 0.7f;
 
+	UFUNCTION()
+	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 	void SetCharacterFollowCamera(bool bWillFollowCamera);
+	void UpdateMeshScaleAndSpringArmLocation(float InSatiety, float InMaxSatiety);
+
+	/**
+	 * Line Trace: mainly for calculating the projectile eject location
+	 */
+	FVector ProjectileEjectLocation;
+	FRotator ProjectileEjectRotation;
+	FHitResult LineTraceHitResult;
+	void DoLineTrace(FVector& OutEjectLocation, FRotator& OutEjectRotator);
+
+	/**
+	 * Aim Dot
+	 */
+	UPROPERTY(EditAnywhere, Category = "Aim Dot")
+	UTexture2D* AimDot;
+	UPROPERTY(EditAnywhere, Category = "Aim Dot")
+	FLinearColor AimDotColor = FLinearColor::White;
+
+	/**
+	 * Audio
+	 */
+	UPROPERTY(EditAnywhere, Category = "Audio")
+	USoundCue* MeleeAttackSound;
+	UFUNCTION()
+	void PlayMeleeAttackSound();
 public:
 	void UpdateAlertLevel(float DeltaSeconds, float InAlertLevel, bool bIsNaturalDecay = false);
-	void UpdateSatiety(float DeltaSeconds, float InHungerLevel, bool bIsNaturalDecay = false);
+	void UpdateSatiety(float DeltaSeconds, float InSatiety, bool bIsNaturalDecay = false);
+	void UpdateSpeed(float InSpeed, float InSpeedFactor = 1.f);
+	float CalcSpeedFactor(float InSatiety, float InMaxSatiety);
+
+	UFUNCTION(BlueprintCallable)
+	void SetSatiety(float InSatiety) { Satiety = InSatiety; }
 	
 	FORCEINLINE void IncreaseRangeAttackTimes(int InRangeAttackTimes) { RangeAttackTimes += InRangeAttackTimes; }
 };

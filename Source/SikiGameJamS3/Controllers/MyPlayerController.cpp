@@ -7,7 +7,9 @@
 #include "EnhancedInputSubsystems.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
+#include "Kismet/GameplayStatics.h"
 #include "SikiGameJamS3/Characters/PlayerCharacter.h"
+#include "SikiGameJamS3/Framework/MainGameMode.h"
 #include "SikiGameJamS3/HUD/GameHUD.h"
 #include "SikiGameJamS3/HUD/GameOverlay.h"
 
@@ -15,6 +17,8 @@
 void AMyPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
+	PrimaryActorTick.bCanEverTick = true;
+	
 	TryGetPlayerCharacter();
 	if (ULocalPlayer* LocalPlayer = Cast<ULocalPlayer>(Player))
 	{
@@ -36,6 +40,11 @@ void AMyPlayerController::BeginPlay()
 			EnhancedInputComponent->BindAction(Sprint,ETriggerEvent::Triggered , this, &ThisClass::OnSprintTriggered);
 			EnhancedInputComponent->BindAction(Sprint,ETriggerEvent::Completed , this, &ThisClass::OnSprintCompleted);
 		}
+		if (AMainGameMode* MainGameMode = Cast<AMainGameMode>(UGameplayStatics::GetGameMode(GetWorld())))
+		{
+			MainGameMode->OnEnemyNumberChanged.AddDynamic(this, &ThisClass::OnEnemyNumberChanged);
+			RemainingEnemies = MainGameMode->GetRemainingEnemies();
+		}
 	}
 }
 
@@ -44,7 +53,14 @@ void AMyPlayerController::TryGetPlayerCharacter()
 	OwningPlayerCharacter = OwningPlayerCharacter == nullptr ? Cast<APlayerCharacter>(GetPawn()) : OwningPlayerCharacter;
 }
 
-void AMyPlayerController::SetHUDAlertLevel(float AlertLevel, float MaxAlertLevel)
+void AMyPlayerController::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	UpdateHUDRemainingEnemies(RemainingEnemies);
+}
+
+
+void AMyPlayerController::UpdateHUDAlertLevel(float AlertLevel, float MaxAlertLevel)
 {
 	TryGetPlayerCharacter();
 	GameHUD = GameHUD == nullptr ? Cast<AUGameHUD>(GetHUD()) : GameHUD;
@@ -61,7 +77,7 @@ void AMyPlayerController::SetHUDAlertLevel(float AlertLevel, float MaxAlertLevel
 	}
 }
 
-void AMyPlayerController::SetHUDSatiety(float Satiety, float MaxSatiety)
+void AMyPlayerController::UpdateHUDSatiety(float Satiety, float MaxSatiety)
 {
 	TryGetPlayerCharacter();
 	GameHUD = GameHUD == nullptr ? Cast<AUGameHUD>(GetHUD()) : GameHUD;
@@ -78,7 +94,7 @@ void AMyPlayerController::SetHUDSatiety(float Satiety, float MaxSatiety)
 	}
 }
 
-void AMyPlayerController::SetHUDRangeAttackTime(int InRangeAttackTime)
+void AMyPlayerController::UpdateHUDRangeAttackTime(int InRangeAttackTime)
 {
 	TryGetPlayerCharacter();
 	GameHUD = GameHUD == nullptr ? Cast<AUGameHUD>(GetHUD()) : GameHUD;
@@ -91,9 +107,32 @@ void AMyPlayerController::SetHUDRangeAttackTime(int InRangeAttackTime)
 	}
 }
 
-void AMyPlayerController::SetHUDRemainingEnemies(int InRemainingEnemies)
+void AMyPlayerController::UpdateHUDRemainingEnemies(int InRemainingEnemies)
 {
+	TryGetPlayerCharacter();
+	GameHUD = GameHUD == nullptr ? Cast<AUGameHUD>(GetHUD()) : GameHUD;
+	if (OwningPlayerCharacter
+		&& GameHUD
+		&& GameHUD->GameOverlay
+		&& GameHUD->GameOverlay->RemainingEnemiesText)
+	{
+		GameHUD->GameOverlay->RemainingEnemiesText->SetText(FText::FromString(FString::Printf(TEXT("%d"), InRemainingEnemies)));
+	}
 }
+
+void AMyPlayerController::UpdateHUDAimDot(UTexture2D* InAimDot, FLinearColor InAimDotColor)
+{
+	TryGetPlayerCharacter();
+	GameHUD = GameHUD == nullptr ? Cast<AUGameHUD>(GetHUD()) : GameHUD;
+	if (OwningPlayerCharacter
+		&& GameHUD
+		&& InAimDot)
+	{
+		GameHUD->SetAimDot(InAimDot);
+		GameHUD->SetAimDotColor(InAimDotColor);
+	}
+}
+
 
 void AMyPlayerController::OnMovementTriggered(const FInputActionValue& Value)
 {
@@ -153,4 +192,9 @@ void AMyPlayerController::OnSprintCompleted(const FInputActionValue& Value)
 {
 	TryGetPlayerCharacter();
 	OwningPlayerCharacter->HandleSprint(Value.Get<bool>());
+}
+
+void AMyPlayerController::OnEnemyNumberChanged(int InRemainingEnemies)
+{
+	RemainingEnemies = InRemainingEnemies;
 }
