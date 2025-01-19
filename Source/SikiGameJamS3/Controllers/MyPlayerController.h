@@ -56,7 +56,7 @@ private:
 	void OnSprintTriggered(const FInputActionValue &Value);
 	void OnSprintCompleted(const FInputActionValue &Value);
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess), Category = "Gameplay")
 	APlayerCharacter* OwningPlayerCharacter;
 
 	UPROPERTY()

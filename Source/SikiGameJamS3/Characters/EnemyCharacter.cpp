@@ -5,6 +5,7 @@
 
 #include "AIController.h"
 #include "PlayerCharacter.h"
+#include "Components/AudioComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Perception/AIPerceptionComponent.h"
@@ -14,7 +15,7 @@ AEnemyCharacter::AEnemyCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	AIPerception = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AIPerception"));
-	
+	DeadSound = CreateDefaultSubobject<UAudioComponent>(TEXT("DeadSound"));
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 }
 
@@ -62,7 +63,8 @@ void AEnemyCharacter::PlayMontage(UAnimMontage* MontageToPlay)
 	{
 		AnimInstance->OnMontageEnded.RemoveAll(this);
 		AnimInstance->Montage_Play(MontageToPlay);
-		if (EnemyState != EEnemyState::Dead)
+
+		if (EnemyState != EEnemyState::Dead && MontageToPlay != DeadMontage)
 		{
 			AnimInstance->OnMontageBlendingOut.AddDynamic(this, &AEnemyCharacter::OnMontageBlendingOut);
 		}
@@ -71,8 +73,15 @@ void AEnemyCharacter::PlayMontage(UAnimMontage* MontageToPlay)
 
 void AEnemyCharacter::OnMontageBlendingOut(UAnimMontage* Montage, bool bInterrupted)
 {
-	SetEnemyState(EEnemyState::Dead);
-	PlayMontage(DeadMontage);
+	if (EnemyState != EEnemyState::Dead)
+	{
+		SetEnemyState(EEnemyState::Dead);
+		PlayMontage(DeadMontage);
+		if (DeadSound)
+		{
+			DeadSound->Play();
+		}
+	}
 }
 
 float AEnemyCharacter::GetCurrentMaxSpeed(bool bIsRunningAway) const

@@ -21,16 +21,10 @@ void AMainGameMode::BeginPlay()
 	OnEnemyNumberChanged.Broadcast(RemainingEnemies);
 }
 
-void AMainGameMode::HandleGameOver(bool bHasWinTheGame)
+void AMainGameMode::HandleGameOver(bool bInHasWinTheGame)
 {
-	if (bHasWinTheGame)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("You Win!"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("You Lose!"));
-	}
+	bHasWinTheGame = bInHasWinTheGame;
+	OnGameOver.Broadcast(bHasWinTheGame);
 }
 
 void AMainGameMode::OnEnemyDestroyed()

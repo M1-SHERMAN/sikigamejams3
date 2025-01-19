@@ -19,6 +19,7 @@ enum class EEnemyState : uint8
 class UAIPerceptionComponent;
 class UAISenseConfig;
 class UCapsuleComponent;
+class UAudioComponent;
 UCLASS()
 class SIKIGAMEJAMS3_API AEnemyCharacter : public ABaseCharacter, public IInteractWithEnmyInterface
 {
@@ -26,6 +27,7 @@ class SIKIGAMEJAMS3_API AEnemyCharacter : public ABaseCharacter, public IInterac
 public:
 	AEnemyCharacter();
 	virtual void Tick(float DeltaSeconds) override;
+	
 protected:
 	
 	UPROPERTY(EditAnywhere, Category="Enemy|AI")
@@ -50,7 +52,7 @@ protected:
 	UAnimMontage* DeadMontage;
 	
 	void PlayMontage(UAnimMontage* MontageToPlay);
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable, Category="Enemy|Audio")
 	void OnMontageBlendingOut(UAnimMontage* Montage, bool bInterrupted);
 	UFUNCTION()
 	void EatenByPlayerCharacter(UPrimitiveComponent* OverlappedComponent,
@@ -59,6 +61,9 @@ protected:
 		int32 OtherBodyIndex,
 		bool bFromSweep,
 		const FHitResult& SweepResult);
+
+	UPROPERTY(EditAnywhere, Category="Enemy|Audio")
+	UAudioComponent* DeadSound;
 public:
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE void SetEnemyState(EEnemyState InEnemyState) { EnemyState = InEnemyState; }

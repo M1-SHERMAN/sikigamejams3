@@ -108,9 +108,9 @@ private:
 	float MaxAlertLevel = 100.f;
 	
 	UPROPERTY(EditAnywhere, Category="Character|Alert Datas|Attack")
-	float MeleeAttackAlertLevel = 30.f;
+	float MeleeAttackAlertLevel = 15.f;
 	UPROPERTY(EditAnywhere, Category="Character|Alert Datas|Attack")
-	float RangeAttackAlertLevel = 10.f;
+	float RangeAttackAlertLevel = 5.f;
 	
 	UPROPERTY(EditAnywhere, Category="Character|Alert Datas|Movement")
 	float SprintAlertLevel = 0.02f;
@@ -118,7 +118,7 @@ private:
 	float WalkAlertLevel = 0.009f;
 	
 	UPROPERTY(EditAnywhere, Category="Character|Alert Datas|Decay")
-	float AlertLevelDecayRate = 0.8f;
+	float AlertLevelDecayRate = 1.f;
 	UPROPERTY(EditAnywhere, Category="Character|Alert Datas|Decay")
 	float AlertLevelNatualDecayThreshold = 50.f;
 	
@@ -128,7 +128,14 @@ private:
 	float MaxSatiety = 100.f;
 	UPROPERTY(EditAnywhere, Category="Character|Satiety Datas")
 	float SatietyDecayRate = 0.7f;
+	UPROPERTY(EditAnywhere, Category="Character|Satiety Datas")
+	float SatietyDecayFactorWalk = 1.2f;
+	UPROPERTY(EditAnywhere, Category="Character|Satiety Datas")
+	float SatietyDecayFactorSprint = 1.5f;
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSatietyChanged, float, SatietyValue);
+	FTimerHandle SatietyChangeBroadcastTimerHandle;
 
+	
 	UFUNCTION()
 	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 	void SetCharacterFollowCamera(bool bWillFollowCamera);
@@ -159,12 +166,18 @@ private:
 	void PlayMeleeAttackSound();
 public:
 	void UpdateAlertLevel(float DeltaSeconds, float InAlertLevel, bool bIsNaturalDecay = false);
-	void UpdateSatiety(float DeltaSeconds, float InSatiety, bool bIsNaturalDecay = false);
+	void UpdateSatiety(float DeltaSeconds, float InSatiety, bool bIsDecay = false);
 	void UpdateSpeed(float InSpeed, float InSpeedFactor = 1.f);
 	float CalcSpeedFactor(float InSatiety, float InMaxSatiety);
 
 	UFUNCTION(BlueprintCallable)
 	void SetSatiety(float InSatiety) { Satiety = InSatiety; }
+	FOnSatietyChanged OnSatietyChanged;
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE float GetSatiety() const { return Satiety; }
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE float GetAlertLevel() const { return CurrentAlertLevel; }
+	
 	
 	FORCEINLINE void IncreaseRangeAttackTimes(int InRangeAttackTimes) { RangeAttackTimes += InRangeAttackTimes; }
 };

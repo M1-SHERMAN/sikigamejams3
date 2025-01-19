@@ -72,6 +72,15 @@ void APlayerCharacter::BeginPlay()
 	Super::BeginPlay();
 	
 	UpdateHUD();
+	OnSatietyChanged.Broadcast(Satiety);
+
+	// Broadcast Satiety change every 3 seconds
+	// If Broadcast in UpdateSatiety, it will be broadcast every frame
+	GetWorld()->GetTimerManager().SetTimer(
+		SatietyChangeBroadcastTimerHandle,
+		[this](){OnSatietyChanged.Broadcast(Satiety);},
+		3.f,
+		true);
 }
 
 void APlayerCharacter::OnMeleeAttackCollisionBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -104,6 +113,9 @@ void APlayerCharacter::HandleMovement(const FVector2D& InputValue)
 		
 		float NewAlertLevel = bIsSprinting ? SprintAlertLevel : WalkAlertLevel;
 		UpdateAlertLevel(0.0f,NewAlertLevel, false);
+		float SatietyDecayFactor = bIsSprinting ? -SatietyDecayFactorSprint : -SatietyDecayFactorWalk;
+		float NewSatiety = SatietyDecayFactor * SatietyDecayRate;
+		UpdateSatiety(0.0f, NewSatiety, true);
 	}
 }
 
@@ -332,7 +344,7 @@ void APlayerCharacter::UpdateAlertLevel(float DeltaSeconds, float InAlertLevel, 
 
 	// Check if the alert level is over the maximum
 	// if so, any further increase will trigger the game over
-	if (CurrentAlertLevel >= MaxAlertLevel)
+	if (CurrentAlertLevel + 0.5f >= MaxAlertLevel)
 	{
 		if (InAlertLevel > 0)
 		{
@@ -347,9 +359,9 @@ void APlayerCharacter::UpdateAlertLevel(float DeltaSeconds, float InAlertLevel, 
 	CurrentAlertLevel = FMath::Clamp(NewAlertLevel, 0.f, MaxAlertLevel);
 }
 
-void APlayerCharacter::UpdateSatiety(float DeltaSeconds, float InSatiety, bool bIsNaturalDecay)
+void APlayerCharacter::UpdateSatiety(float DeltaSeconds, float InSatiety, bool bIsDecay)
 {
-	if (bIsNaturalDecay && !bIsInterpolatingSatiety)
+	if (bIsDecay && !bIsInterpolatingSatiety)
 	{
 		Satiety =  FMath::Max(0.f, Satiety - SatietyDecayRate * DeltaSeconds);
 	}
