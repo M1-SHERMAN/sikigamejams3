@@ -20,6 +20,7 @@ class UAIPerceptionComponent;
 class UAISenseConfig;
 class UCapsuleComponent;
 class UAudioComponent;
+class USoundCue;
 UCLASS()
 class SIKIGAMEJAMS3_API AEnemyCharacter : public ABaseCharacter, public IInteractWithEnmyInterface
 {
@@ -40,9 +41,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Enemy|Datas")
 	float RunAwayDistance = 1000.f;
 	UPROPERTY(EditAnywhere, Category="Enemy|Datas")
-	float PatrolSpeed = 150.f;
+	float PatrolSpeed = 175.f;
 	UPROPERTY(EditAnywhere, Category="Enemy|Datas")
-	float RunAwaySpeed = 400.f;
+	float RunAwaySpeed = 425.f;
 	UPROPERTY(EditAnywhere, Category="Enemy|Datas")
 	float SatietyToRecover = 15.f;
 
@@ -64,6 +65,8 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category="Enemy|Audio")
 	UAudioComponent* DeadSound;
+	UPROPERTY(EditAnywhere, Category="Enemy|Audio")
+	USoundCue* EatenSound;
 public:
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE void SetEnemyState(EEnemyState InEnemyState) { EnemyState = InEnemyState; }

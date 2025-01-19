@@ -10,6 +10,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "SikiGameJamS3/Framework/MainGameMode.h"
+#include "Sound/SoundCue.h"
 
 AEnemyCharacter::AEnemyCharacter()
 {
@@ -51,6 +52,10 @@ void AEnemyCharacter::EatenByPlayerCharacter(UPrimitiveComponent* OverlappedComp
 		{
 			MainGameMode->OnEnemyDestroyed();
 			Destroy();
+		}
+		if (EatenSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(GetWorld(), EatenSound, GetActorLocation());
 		}
 	}
 }

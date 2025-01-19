@@ -16,7 +16,7 @@ class SIKIGAMEJAMS3_API APickableGainRangeAttackTimes : public ABasePickable
 protected:
 	virtual void BeginPlay() override;
 	
-	virtual void OnBoxBeginOverlap(
+	virtual void OnCollisionBoxBeginOverlap(
 		UPrimitiveComponent* OverlappedComponent,
 		AActor* OtherActor,
 		UPrimitiveComponent* OtherComp,

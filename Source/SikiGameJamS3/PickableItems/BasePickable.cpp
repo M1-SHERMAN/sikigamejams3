@@ -3,6 +3,10 @@
 
 #include "BasePickable.h"
 #include "Components/BoxComponent.h"
+#include "Components/WidgetComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "SikiGameJamS3/Characters/PlayerCharacter.h"
+#include "Sound/SoundCue.h"
 
 ABasePickable::ABasePickable()
 {
@@ -16,18 +20,55 @@ ABasePickable::ABasePickable()
 	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	MeshComponent->SetupAttachment(CollisionBox);
 	MeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	ShowTipsBox = CreateDefaultSubobject<UBoxComponent>(TEXT("ShowTipsBox"));
+	ShowTipsBox->SetupAttachment(RootComponent);
+	ShowTipsBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	ShowTipsBox->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+
+	TipsTextWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("TipsTextWidget"));
+	TipsTextWidget->SetupAttachment(ShowTipsBox);
+	TipsTextWidget->SetVisibility(true);
+	TipsTextWidget->SetHiddenInGame(true);
 }
 
 void ABasePickable::BeginPlay()
 {
 	Super::BeginPlay();
-	CollisionBox->OnComponentBeginOverlap.AddDynamic(this, &ABasePickable::OnBoxBeginOverlap);
+	CollisionBox->OnComponentBeginOverlap.AddDynamic(this, &ABasePickable::OnCollisionBoxBeginOverlap);
+	ShowTipsBox->OnComponentBeginOverlap.AddDynamic(this, &ABasePickable::OnTipsBoxBeginOverlap);
+	ShowTipsBox->OnComponentEndOverlap.AddDynamic(this, &ABasePickable::OnTipsBoxEndOverlap);
 	
 }
 
-void ABasePickable::OnBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+void ABasePickable::OnCollisionBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	if (Cast<APlayerCharacter>(OtherActor))
+	{
+		if (PickSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, PickSound, GetActorLocation());
+		}
+	}
+}
+
+void ABasePickable::OnTipsBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (Cast<APlayerCharacter>(OtherActor) && TipsTextWidget)
+	{
+		TipsTextWidget->SetHiddenInGame(false);
+	}
+}
+
+void ABasePickable::OnTipsBoxEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if (Cast<APlayerCharacter>(OtherActor) && TipsTextWidget)
+	{
+		TipsTextWidget->SetHiddenInGame(true);
+	}
 }
 
 void ABasePickable::Tick(float DeltaTime)
